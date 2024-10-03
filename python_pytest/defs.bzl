@@ -3,22 +3,36 @@
 load("@rules_python//python:defs.bzl", "py_test")
 # load("@py_deps//:requirements.bzl", "requirement")
 
-def py_pytest_test(name, srcs, deps = [], args = [], **kwargs):
+def py_pytest_test(name, srcs, deps = [], args = [], pytest_deps = [], **kwargs):
     """Use pytest to run tests, using a wrapper script to interface with Bazel.
 
-    ```py
+    ```starlark
     py_pytest_test(
       name = "test_w_pytest",
       size = "small",
       srcs = ["test.py"],
-      deps = [
-        # TODO Add this for the user
-        requirement("pytest"),
-      ],
+    )
+    ```
+
+    By default, `@pip//pytest` is added to `deps`.
+    If sharding is used (`shard_count > 1`) then `@pip//pytest_shard` is also added.
+    To provide explicit deps for the pytest library, set `pytest_deps`:
+
+    ```starlark
+    py_pytest_test(
+      name = "test_w_my_pytest",
+      shard_count = 2,
+      srcs = ["test.py"],
+      pytest_deps = [requirement("pytest"), requirement("pytest-shard"), ...],
     )
     ```
     """
     shim_label = Label("//python_pytest:pytest_shim.py")
+
+    if pytest_deps == None:
+      pytest_deps = ["@pip//pytest"]
+      if getattr(kwargs, "shard_count", 1) > 1:
+        pytest_deps.append("@pip//pytest_shard")
 
     py_test(
         name = name,
@@ -31,10 +45,6 @@ def py_pytest_test(name, srcs, deps = [], args = [], **kwargs):
         ] + args + ["$(location :%s)" % x for x in srcs],
         # python_version = "PY3",
         # srcs_version = "PY3",
-        # TODO It'd be nice to implicitly include pytest, but I don't know how to know the requirements repo nme
-        # deps = deps + [
-        #     requirement("pytest"),
-        # ],
-        deps = deps,
+        deps = deps + pytest_deps,
         **kwargs
     )
