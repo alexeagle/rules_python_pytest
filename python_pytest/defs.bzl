@@ -41,15 +41,15 @@ def py_pytest_test(name, srcs, deps = [], args = [], pytest_deps = None, pip_rep
       pytest_deps: Labels of the pytest tool and other packages it may import.
       pip_repo: Name of the external repository where Python packages are installed.
         It's typically created by `pip.parse`.
-        This attribute is used only when `pytest_deps` is unset. 
+        This attribute is used only when `pytest_deps` is unset.
       **kwargs: Additional named parameters to py_test.
     """
     shim_label = Label("//python_pytest:pytest_shim.py")
 
     if pytest_deps == None:
-      pytest_deps = ["@{}//pytest".format(pip_repo)]
-      if kwargs.get("shard_count", 1) > 1:
-        pytest_deps.append("@{}//pytest_shard".format(pip_repo))
+        pytest_deps = ["@{}//pytest".format(pip_repo)]
+        if kwargs.get("shard_count", 1) > 1:
+            pytest_deps.append("@{}//pytest_shard".format(pip_repo))
 
     py_test(
         name = name,
